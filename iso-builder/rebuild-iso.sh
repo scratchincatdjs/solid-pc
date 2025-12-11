@@ -9,7 +9,7 @@ WORKSPACE="${SCRIPT_DIR}/workspace"
 EXTRACT_DIR="${WORKSPACE}/extract"
 SQUASHFS_DIR="${WORKSPACE}/squashfs"
 OUTPUT_DIR="$(cd ${SCRIPT_DIR}/.. && pwd)/output"
-OUTPUT_ISO="${OUTPUT_DIR}/solid-mint-22.iso"
+OUTPUT_ISO="${OUTPUT_DIR}/solid-ubuntu-24.04.iso"
 
 if [ ! -d "${WORKSPACE}" ]; then
     echo "ERROR: Workspace not found. Run extract-iso.sh first."
@@ -48,7 +48,7 @@ echo "→ Rebuilding ISO (this may take a few minutes)..."
 sudo xorriso -as mkisofs \
     -iso-level 3 \
     -full-iso9660-filenames \
-    -volid "SOLID Linux Mint" \
+    -volid "SOLID Ubuntu" \
     -eltorito-boot isolinux/isolinux.bin \
     -eltorito-catalog isolinux/boot.cat \
     -no-emul-boot \

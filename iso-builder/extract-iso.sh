@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# Extract Linux Mint ISO for customization
+# Extract Ubuntu ISO for customization
 # Usage: ./extract-iso.sh <path-to-iso>
 
 ISO_PATH="$1"
@@ -22,7 +22,7 @@ if [ ! -f "${ISO_PATH}" ]; then
 fi
 
 echo "================================================"
-echo "Extracting Linux Mint ISO"
+echo "Extracting Ubuntu ISO"
 echo "================================================"
 echo "ISO: $(basename ${ISO_PATH})"
 echo "Workspace: ${WORKSPACE}"

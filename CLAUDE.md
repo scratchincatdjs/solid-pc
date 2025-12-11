@@ -4,18 +4,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-SOLID (Small-business Optimized Linux Integrated Desktop) Personal Computer Builder is a Packer + Ansible project that creates a customized Linux Mint Cinnamon ISO for small business use. The goal is to provide a Windows-like experience with business-essential tools while maintaining vendor independence and cost efficiency.
+SOLID (Small-business Optimized Linux Integrated Desktop) Personal Computer Builder is a Packer + Ansible project that creates a customized **Ubuntu 24.04 LTS with Cinnamon desktop** ISO for small business use. The goal is to provide a Windows-like experience with business-essential tools while maintaining vendor independence and cost efficiency.
 
 ## Project Architecture
 
 This is a **two-stage build system**:
 
 1. **Stage 1 (Packer + Ansible)**: Builds a customized VM using QEMU with all software and configurations
-2. **Stage 2 (ISO Remastering)**: Extracts base Linux Mint ISO, injects customized filesystem, rebuilds bootable ISO
+2. **Stage 2 (ISO Remastering)**: Extracts base Ubuntu ISO, injects customized filesystem, rebuilds bootable ISO
 
 ## Build System Structure
 
-- `packer/` - Packer configuration for VM build (QEMU, preseed, provisioning scripts)
+- `packer/` - Packer configuration for VM build (QEMU, autoinstall, provisioning scripts)
 - `ansible/` - Ansible playbooks and roles for system provisioning
   - `roles/packages/` - Package installation/removal
   - `roles/cinnamon-desktop/` - Windows-like desktop customization
@@ -26,6 +26,24 @@ This is a **two-stage build system**:
 - `scripts/` - Helper scripts (download ISO, verify checksums, test ISO)
 - `Makefile` - Build automation
 
+## Technology Stack
+
+- **Base OS**: Ubuntu 24.04 LTS (Noble Numbat) - support until 2029
+- **Desktop Environment**: Cinnamon (manually installed on Ubuntu)
+- **Builder Environment**: Fedora 43
+- **Installer Method**: Autoinstall with cloud-init (Ubuntu 24.04+)
+- **Partitioning**: BTRFS with LUKS encryption
+- **Snapshot Tool**: Timeshift with BTRFS subvolumes
+- **Provisioning**: Packer + Ansible
+- **Virtualization**: QEMU/KVM
+
+### Why Ubuntu LTS?
+
+- **Upstream Support**: Direct Ubuntu LTS support until 2029 (vs Linux Mint's derivative timeline)
+- **Hardware Compatibility**: Broader hardware support and firmware availability
+- **Enterprise Backing**: Canonical's commercial support and long-term commitment
+- **Cinnamon Availability**: Cinnamon desktop can be installed on Ubuntu from official repos
+
 ## Common Commands
 
 ```bash
@@ -33,7 +51,7 @@ This is a **two-stage build system**:
 make all
 
 # Step-by-step build
-make download-iso    # Download Linux Mint 22 ISO
+make download-iso    # Download Ubuntu 24.04 LTS ISO
 make verify-iso      # Verify checksums
 make packer-build    # Build VM with Packer + Ansible (60-90 min)
 make extract-iso     # Extract base ISO

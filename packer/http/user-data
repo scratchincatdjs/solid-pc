@@ -1,0 +1,66 @@
+#cloud-config
+autoinstall:
+  version: 1
+
+  # Locale and keyboard
+  locale: en_US.UTF-8
+  keyboard:
+    layout: us
+
+  # Network configuration
+  network:
+    network:
+      version: 2
+      ethernets:
+        any:
+          match:
+            name: "en*"
+          dhcp4: true
+
+  # Identity (build user)
+  identity:
+    hostname: solid-pc
+    username: solid
+    password: "$6$dundCMDM.o2SfL3n$K.WU7H4riJ93MpXII6OAKfftyNji6R/nTZumquwMLI6EnPSnA9QR6mAUIApj4FbbXXy5Kklqy9kE9fhh.zP4/."
+
+  # SSH configuration
+  ssh:
+    install-server: true
+    allow-pw: true
+
+  # Storage - simple partitioning for VM build
+  # (Final ISO will use BTRFS via custom partitioning script)
+  storage:
+    layout:
+      name: direct
+      match:
+        size: largest
+
+  # Packages to install
+  packages:
+    - ubuntu-desktop
+    - openssh-server
+    - curl
+    - wget
+    - vim
+    - git
+    - build-essential
+    - python3
+    - python3-pip
+    - python3-apt
+    - software-properties-common
+    - dconf-cli
+    - dconf-editor
+
+  # Late commands (equivalent to preseed success_command)
+  late-commands:
+    - echo 'solid ALL=(ALL) NOPASSWD:ALL' > /target/etc/sudoers.d/solid
+    - chmod 440 /target/etc/sudoers.d/solid
+    - mkdir -p /target/home/solid/.ssh
+    - chmod 700 /target/home/solid/.ssh
+    - chown -R 1000:1000 /target/home/solid/.ssh
+
+  # User data for cloud-init
+  user-data:
+    disable_root: false
+    ssh_pwauth: true

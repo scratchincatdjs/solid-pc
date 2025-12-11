@@ -1,32 +1,32 @@
-// Packer Variables for SOLID Linux Mint Build
+// Packer Variables for SOLID Ubuntu Cinnamon Build
 
-variable "mint_version" {
+variable "ubuntu_version" {
   type    = string
-  default = "22"
-  description = "Linux Mint version to build"
+  default = "24.04.3"
+  description = "Ubuntu version to build"
 }
 
-variable "mint_flavor" {
+variable "ubuntu_flavor" {
   type    = string
-  default = "cinnamon-64bit"
-  description = "Linux Mint flavor (cinnamon-64bit, mate-64bit, xfce-64bit)"
+  default = "desktop-amd64"
+  description = "Ubuntu flavor (desktop-amd64, server-amd64)"
 }
 
 variable "iso_url" {
   type    = string
-  default = "../downloads/linuxmint-22-cinnamon-64bit.iso"
-  description = "Path to Linux Mint ISO"
+  default = "../downloads/ubuntu-24.04.3-desktop-amd64.iso"
+  description = "Path to Ubuntu ISO"
 }
 
 variable "iso_checksum" {
   type    = string
-  default = "file:../downloads/sha256sum.txt"
+  default = "file:../downloads/SHA256SUMS"
   description = "Checksum for ISO verification"
 }
 
 variable "vm_name" {
   type    = string
-  default = "solid-mint"
+  default = "solid-ubuntu"
   description = "Name for the VM"
 }
 

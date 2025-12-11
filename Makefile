@@ -1,11 +1,11 @@
 .PHONY: all clean clean-all download-iso verify-iso install-deps packer-build extract-iso customize-iso rebuild-iso test-iso help
 
 # Variables
-MINT_VERSION = 22
-MINT_ISO_FLAVOR = cinnamon-64bit
-MINT_ISO_NAME = linuxmint-$(MINT_VERSION)-$(MINT_ISO_FLAVOR).iso
-MINT_ISO_PATH = downloads/$(MINT_ISO_NAME)
-OUTPUT_ISO = output/solid-mint-$(MINT_VERSION).iso
+UBUNTU_VERSION = 24.04.3
+UBUNTU_ISO_FLAVOR = desktop-amd64
+UBUNTU_ISO_NAME = ubuntu-$(UBUNTU_VERSION)-$(UBUNTU_ISO_FLAVOR).iso
+UBUNTU_ISO_PATH = downloads/$(UBUNTU_ISO_NAME)
+OUTPUT_ISO = output/solid-ubuntu-$(basename $(UBUNTU_VERSION)).iso
 
 # Colors for output
 GREEN = \033[0;32m
@@ -19,11 +19,11 @@ all: install-deps packer-build customize-iso rebuild-iso
 	@echo "$(GREEN)✓ ISO ready at: $(OUTPUT_ISO)$(NC)"
 
 help:
-	@echo "SOLID Linux Mint ISO Builder"
+	@echo "SOLID Ubuntu Cinnamon ISO Builder"
 	@echo ""
 	@echo "Available targets:"
 	@echo "  $(GREEN)make all$(NC)             - Complete build pipeline (install deps, build VM, create ISO)"
-	@echo "  $(GREEN)make download-iso$(NC)    - Download Linux Mint $(MINT_VERSION) ISO"
+	@echo "  $(GREEN)make download-iso$(NC)    - Download Ubuntu $(UBUNTU_VERSION) ISO"
 	@echo "  $(GREEN)make verify-iso$(NC)      - Verify ISO checksums"
 	@echo "  $(GREEN)make install-deps$(NC)    - Install build dependencies (Packer, Ansible, QEMU, etc.)"
 	@echo "  $(GREEN)make packer-build$(NC)    - Build VM with Packer + Ansible (Stage 1)"
@@ -35,36 +35,43 @@ help:
 	@echo "  $(GREEN)make clean-all$(NC)       - Remove everything including downloads"
 
 download-iso:
-	@echo "$(YELLOW)→ Downloading Linux Mint $(MINT_VERSION) ISO...$(NC)"
-	@./scripts/download-mint-iso.sh $(MINT_VERSION) $(MINT_ISO_FLAVOR)
+	@echo "$(YELLOW)→ Downloading Ubuntu $(UBUNTU_VERSION) ISO...$(NC)"
+	@./scripts/download-ubuntu-iso.sh $(UBUNTU_VERSION) $(UBUNTU_ISO_FLAVOR)
 	@echo "$(GREEN)✓ Download complete$(NC)"
 
 verify-iso: download-iso
 	@echo "$(YELLOW)→ Verifying ISO checksums...$(NC)"
-	@./scripts/verify-iso.sh $(MINT_ISO_PATH)
+	@./scripts/verify-iso.sh $(UBUNTU_ISO_PATH)
 	@echo "$(GREEN)✓ ISO verified$(NC)"
 
 install-deps:
-	@echo "$(YELLOW)→ Installing build dependencies...$(NC)"
+	@echo "$(YELLOW)→ Installing build dependencies on Fedora 43...$(NC)"
 	@if ! command -v packer &> /dev/null; then \
-		echo "$(YELLOW)→ Installing Packer...$(NC)"; \
-		wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg; \
-		echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $$(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list; \
-		sudo apt-get update && sudo apt-get install -y packer; \
+		echo "$(YELLOW)→ Installing Packer from HashiCorp repo...$(NC)"; \
+		sudo dnf install -y dnf-plugins-core; \
+		sudo dnf config-manager --add-repo https://rpm.releases.hashicorp.com/fedora/hashicorp.repo; \
+		sudo dnf install -y packer; \
 	fi
-	@sudo apt-get update
-	@sudo apt-get install -y \
+	@echo "$(YELLOW)→ Installing QEMU, Ansible, and ISO tools...$(NC)"
+	@sudo dnf install -y \
 		qemu-kvm \
-		libvirt-daemon-system \
-		ansible \
+		qemu-img \
+		libvirt \
+		virt-manager \
+		ansible-core \
 		squashfs-tools \
 		genisoimage \
 		xorriso \
-		isolinux \
+		syslinux \
 		tree \
 		wget \
 		curl
+	@echo "$(YELLOW)→ Enabling libvirtd service...$(NC)"
+	@sudo systemctl enable --now libvirtd || true
+	@echo "$(YELLOW)→ Adding user to libvirt group...$(NC)"
+	@sudo usermod -a -G libvirt $(USER) || true
 	@echo "$(GREEN)✓ Dependencies installed$(NC)"
+	@echo "$(YELLOW)NOTE: You may need to log out and back in for group changes to take effect$(NC)"
 
 packer-build: verify-iso
 	@echo "$(YELLOW)→ Building VM with Packer + Ansible (this will take 60-90 minutes)...$(NC)"
@@ -73,7 +80,7 @@ packer-build: verify-iso
 
 extract-iso: verify-iso
 	@echo "$(YELLOW)→ Extracting base ISO...$(NC)"
-	@cd iso-builder && ./extract-iso.sh ../$(MINT_ISO_PATH)
+	@cd iso-builder && ./extract-iso.sh ../$(UBUNTU_ISO_PATH)
 	@echo "$(GREEN)✓ ISO extracted$(NC)"
 
 customize-iso: packer-build extract-iso

@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# Script to verify Linux Mint ISO checksums
+# Script to verify ISO checksums
 # Usage: ./verify-iso.sh <ISO_PATH>
 
 ISO_PATH="$1"
@@ -18,16 +18,24 @@ fi
 
 ISO_NAME=$(basename "${ISO_PATH}")
 ISO_DIR=$(dirname "${ISO_PATH}")
-SUMS_FILE="${ISO_DIR}/sha256sum.txt"
+
+# Try Ubuntu format first (SHA256SUMS), then Mint format (sha256sum.txt)
+if [ -f "${ISO_DIR}/SHA256SUMS" ]; then
+    SUMS_FILE="${ISO_DIR}/SHA256SUMS"
+elif [ -f "${ISO_DIR}/sha256sum.txt" ]; then
+    SUMS_FILE="${ISO_DIR}/sha256sum.txt"
+else
+    SUMS_FILE=""
+fi
 
 echo "Verifying ISO: ${ISO_NAME}"
 
-# Check if SHA256SUMS file exists
-if [ ! -f "${SUMS_FILE}" ]; then
-    echo "WARNING: sha256sum.txt not found in ${ISO_DIR}"
+# Check if checksums file exists
+if [ -z "${SUMS_FILE}" ]; then
+    echo "WARNING: SHA256SUMS or sha256sum.txt not found in ${ISO_DIR}"
     echo "Skipping checksum verification"
     echo ""
-    echo "To verify manually, download sha256sum.txt from the Linux Mint mirror"
+    echo "To verify manually, download SHA256SUMS from the mirror"
     exit 0
 fi
 
@@ -35,7 +43,7 @@ fi
 EXPECTED_SUM=$(grep "${ISO_NAME}" "${SUMS_FILE}" | awk '{print $1}')
 
 if [ -z "${EXPECTED_SUM}" ]; then
-    echo "WARNING: Checksum not found for ${ISO_NAME} in sha256sum.txt"
+    echo "WARNING: Checksum not found for ${ISO_NAME} in $(basename "${SUMS_FILE}")"
     echo "Skipping checksum verification"
     exit 0
 fi

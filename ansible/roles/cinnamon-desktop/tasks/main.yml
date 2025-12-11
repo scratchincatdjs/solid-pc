@@ -1,12 +1,46 @@
 ---
 # Cinnamon desktop customization for Windows-like experience (FR-7)
 
-- name: Install Cinnamon applets and extensions
+# Install Cinnamon desktop on Ubuntu (not included by default)
+- name: Install Cinnamon desktop environment
   apt:
     name:
+      - cinnamon-desktop-environment
+      - cinnamon-core
       - cinnamon-applets
       - cinnamon-screensaver
+      - nemo
+      - nemo-fileroller
     state: present
+    update_cache: yes
+  tags: cinnamon-install
+
+- name: Set Cinnamon as default session
+  alternatives:
+    name: x-session-manager
+    path: /usr/bin/cinnamon-session
+  tags: cinnamon-install
+
+# Install themes with fallback
+- name: Install theme packages
+  block:
+    - name: Try to install Mint-Y themes
+      apt:
+        name:
+          - mint-themes
+          - mint-y-icons
+        state: present
+      register: mint_theme_install
+      ignore_errors: yes
+
+    - name: Install fallback themes if Mint-Y unavailable
+      apt:
+        name:
+          - arc-theme
+          - papirus-icon-theme
+        state: present
+      when: mint_theme_install is failed
+  tags: themes
 
 - name: Create dconf profile directory
   file:
@@ -49,11 +83,20 @@
     mode: '0644'
   notify: update dconf
 
-- name: Copy SOLID wallpaper (if exists)
+- name: Copy SOLID wallpaper
   copy:
     src: files/solid-wallpaper.jpg
     dest: /usr/share/backgrounds/solid-wallpaper.jpg
     mode: '0644'
+  when: lookup('fileglob', 'files/solid-wallpaper.jpg')
+
+- name: Set fallback Ubuntu wallpaper if custom not available
+  copy:
+    src: /usr/share/backgrounds/warty-final-ubuntu.png
+    dest: /usr/share/backgrounds/solid-wallpaper.jpg
+    remote_src: yes
+    mode: '0644'
+  when: not lookup('fileglob', 'files/solid-wallpaper.jpg')
   ignore_errors: yes
 
 - name: Apply settings to /etc/skel for all new users

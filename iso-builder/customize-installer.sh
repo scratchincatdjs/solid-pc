@@ -15,7 +15,7 @@ if [ ! -d "${WORKSPACE}" ]; then
 fi
 
 echo "================================================"
-echo "Customizing Installer"
+echo "Customizing Ubuntu Installer"
 echo "================================================"
 echo ""
 
