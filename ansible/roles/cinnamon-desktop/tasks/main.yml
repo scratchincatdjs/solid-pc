@@ -1,0 +1,71 @@
+---
+# Cinnamon desktop customization for Windows-like experience (FR-7)
+
+- name: Install Cinnamon applets and extensions
+  apt:
+    name:
+      - cinnamon-applets
+      - cinnamon-screensaver
+    state: present
+
+- name: Create dconf profile directory
+  file:
+    path: /etc/dconf/profile
+    state: directory
+    mode: '0755'
+
+- name: Create user dconf profile
+  copy:
+    dest: /etc/dconf/profile/user
+    content: |
+      user-db:user
+      system-db:local
+    mode: '0644'
+
+- name: Create dconf local.d directory
+  file:
+    path: /etc/dconf/db/local.d
+    state: directory
+    mode: '0755'
+
+- name: Deploy Cinnamon desktop settings (Windows-like configuration)
+  copy:
+    src: files/00-solid-desktop.conf
+    dest: /etc/dconf/db/local.d/00-solid-desktop.conf
+    mode: '0644'
+  notify: update dconf
+
+- name: Deploy panel configuration
+  copy:
+    src: files/01-solid-panel.conf
+    dest: /etc/dconf/db/local.d/01-solid-panel.conf
+    mode: '0644'
+  notify: update dconf
+
+- name: Deploy theme and appearance settings
+  copy:
+    src: files/02-solid-theme.conf
+    dest: /etc/dconf/db/local.d/02-solid-theme.conf
+    mode: '0644'
+  notify: update dconf
+
+- name: Copy SOLID wallpaper (if exists)
+  copy:
+    src: files/solid-wallpaper.jpg
+    dest: /usr/share/backgrounds/solid-wallpaper.jpg
+    mode: '0644'
+  ignore_errors: yes
+
+- name: Apply settings to /etc/skel for all new users
+  file:
+    path: /etc/skel/.config
+    state: directory
+    mode: '0755'
+
+- name: Update dconf database
+  command: dconf update
+  changed_when: false
+
+handlers:
+  - name: update dconf
+    command: dconf update

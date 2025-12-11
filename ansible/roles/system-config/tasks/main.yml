@@ -1,0 +1,19 @@
+---
+# System configuration tasks
+# Handles printing, networking, power management, and security
+
+- name: Import printing configuration tasks
+  import_tasks: printing.yml
+  tags: printing
+
+- name: Import networking configuration tasks
+  import_tasks: networking.yml
+  tags: networking
+
+- name: Import power management configuration tasks
+  import_tasks: power-management.yml
+  tags: power
+
+- name: Import security configuration tasks
+  import_tasks: security.yml
+  tags: security

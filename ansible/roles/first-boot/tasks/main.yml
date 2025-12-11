@@ -1,0 +1,88 @@
+---
+# First-boot wizard setup
+# Installs a wizard that runs on first boot to configure user-specific settings
+
+- name: Install Python GTK dependencies for first-boot wizard
+  apt:
+    name:
+      - python3
+      - python3-gi
+      - gir1.2-gtk-4.0
+      - python3-yaml
+    state: present
+
+- name: Create first-boot wizard directory
+  file:
+    path: /usr/local/share/solid-first-boot
+    state: directory
+    mode: '0755'
+
+- name: Copy first-boot wizard script
+  copy:
+    src: files/first-boot-wizard.py
+    dest: /usr/local/bin/solid-first-boot-wizard
+    mode: '0755'
+
+- name: Create first-boot systemd service
+  copy:
+    dest: /etc/systemd/system/solid-first-boot.service
+    content: |
+      [Unit]
+      Description=SOLID First Boot Setup Wizard
+      After=graphical.target
+      Wants=graphical.target
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/bin/solid-first-boot-wizard
+      RemainAfterExit=yes
+      User=root
+
+      [Install]
+      WantedBy=graphical.target
+    mode: '0644'
+
+- name: Enable first-boot service
+  systemd:
+    name: solid-first-boot
+    enabled: yes
+    daemon_reload: yes
+  when: enable_first_boot_wizard | default(true)
+
+- name: Create placeholder first-boot wizard (to be implemented)
+  copy:
+    dest: /usr/local/bin/solid-first-boot-wizard
+    content: |
+      #!/usr/bin/env python3
+      # SOLID First Boot Wizard
+      # TODO: Implement GTK4 wizard for email, cloud sync, and backup configuration
+
+      import os
+      import sys
+
+      def main():
+          # Check if already run
+          marker_file = "/var/lib/solid-first-boot-complete"
+          if os.path.exists(marker_file):
+              sys.exit(0)
+
+          print("SOLID First Boot Wizard")
+          print("=" * 50)
+          print("Welcome to SOLID Linux Mint!")
+          print("This wizard will help you configure:")
+          print("  - Email (Thunderbird)")
+          print("  - Cloud sync (Nextcloud/rclone)")
+          print("  - Encrypted backups (Duplicati/restic)")
+          print("  - Printer setup")
+          print("")
+          print("Wizard implementation coming soon...")
+          print("For now, please configure manually.")
+          print("")
+
+          # Mark as complete
+          with open(marker_file, 'w') as f:
+              f.write("First boot wizard completed\n")
+
+      if __name__ == "__main__":
+          main()
+    mode: '0755'

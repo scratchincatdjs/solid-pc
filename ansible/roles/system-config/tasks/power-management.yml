@@ -1,0 +1,61 @@
+---
+# Power management configuration (FR-8.3)
+
+- name: Enable and start TLP service
+  systemd:
+    name: tlp
+    enabled: yes
+    state: started
+
+- name: Configure TLP for optimal laptop power management
+  copy:
+    dest: /etc/tlp.conf
+    content: |
+      # TLP Configuration for SOLID Linux Mint
+
+      # CPU Scaling Governor
+      CPU_SCALING_GOVERNOR_ON_AC=performance
+      CPU_SCALING_GOVERNOR_ON_BAT=powersave
+
+      # CPU Performance
+      CPU_ENERGY_PERF_POLICY_ON_AC=performance
+      CPU_ENERGY_PERF_POLICY_ON_BAT=balance_power
+
+      # Disk devices
+      DISK_DEVICES="nvme0n1 sda"
+      DISK_APM_LEVEL_ON_AC="254 254"
+      DISK_APM_LEVEL_ON_BAT="128 128"
+
+      # WiFi power saving
+      WIFI_PWR_ON_AC=off
+      WIFI_PWR_ON_BAT=on
+
+      # USB autosuspend
+      USB_AUTOSUSPEND=1
+
+      # Restore charge thresholds on boot
+      RESTORE_THRESHOLDS_ON_BAT=1
+    mode: '0644'
+    backup: yes
+  notify: restart tlp
+
+- name: Configure systemd sleep settings for reliable wake
+  lineinfile:
+    path: /etc/systemd/sleep.conf
+    regexp: "^{{ item.key }}="
+    line: "{{ item.key }}={{ item.value }}"
+    state: present
+  loop:
+    - { key: 'SuspendMode', value: 'suspend' }
+    - { key: 'HibernateMode', value: 'platform shutdown' }
+  notify: reload systemd
+
+handlers:
+  - name: restart tlp
+    systemd:
+      name: tlp
+      state: restarted
+
+  - name: reload systemd
+    systemd:
+      daemon_reload: yes

@@ -1,0 +1,103 @@
+---
+# Main tasks for packages role
+# Handles installation and removal of packages
+
+- name: Remove bloat packages
+  apt:
+    name: "{{ remove_packages }}"
+    state: absent
+    purge: yes
+    autoremove: yes
+  when: remove_packages is defined and remove_packages | length > 0
+  tags: remove-bloat
+
+- name: Install office productivity packages
+  apt:
+    name: "{{ office_packages }}"
+    state: present
+  when: office_packages is defined
+  tags: office
+
+- name: Install email and calendar packages
+  apt:
+    name: "{{ email_packages }}"
+    state: present
+  when: email_packages is defined
+  tags: email
+
+- name: Install accounting packages
+  apt:
+    name: "{{ accounting_packages }}"
+    state: present
+  when: accounting_packages is defined
+  tags: accounting
+
+- name: Install file sync packages
+  apt:
+    name: "{{ sync_packages }}"
+    state: present
+  when: sync_packages is defined
+  tags: sync
+
+- name: Install Nextcloud desktop client via snap
+  snap:
+    name: nextcloud-desktop-client
+    state: present
+  when: nextcloud_install_method == "snap"
+  tags: sync
+
+- name: Install backup packages
+  apt:
+    name: "{{ backup_packages }}"
+    state: present
+  when: backup_packages is defined
+  tags: backup
+
+- name: Install printing packages
+  apt:
+    name: "{{ printing_packages }}"
+    state: present
+  when: printing_packages is defined
+  tags: printing
+
+- name: Install PDF packages
+  apt:
+    name: "{{ pdf_packages }}"
+    state: present
+  when: pdf_packages is defined
+  tags: pdf
+
+- name: Install hardware support packages
+  apt:
+    name: "{{ hardware_packages }}"
+    state: present
+  when: hardware_packages is defined
+  ignore_errors: yes  # Some packages may not be available
+  tags: hardware
+
+- name: Install desktop packages
+  apt:
+    name: "{{ desktop_packages }}"
+    state: present
+  when: desktop_packages is defined
+  tags: desktop
+
+- name: Install system utility packages
+  apt:
+    name: "{{ system_packages }}"
+    state: present
+  when: system_packages is defined
+  tags: system
+
+- name: Install development packages
+  apt:
+    name: "{{ dev_packages }}"
+    state: present
+  when: dev_packages is defined
+  tags: dev
+
+- name: Clean up package cache
+  apt:
+    autoclean: yes
+    autoremove: yes
+  tags: cleanup

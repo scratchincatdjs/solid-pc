@@ -1,0 +1,5 @@
+[packer]
+default ansible_connection=ssh ansible_user=solid
+
+[packer:vars]
+ansible_python_interpreter=/usr/bin/python3

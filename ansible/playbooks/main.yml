@@ -1,0 +1,61 @@
+---
+# Main playbook for SOLID Linux Mint provisioning
+# This orchestrates all roles to build a customized business laptop system
+
+- name: Provision SOLID Linux Mint
+  hosts: all
+  become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Display build information
+      debug:
+        msg:
+          - "================================================"
+          - "SOLID Linux Mint Provisioning"
+          - "Build User: {{ build_user | default('solid') }}"
+          - "Desktop Environment: {{ desktop_environment }}"
+          - "================================================"
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+  roles:
+    - role: packages
+      tags: packages
+
+    - role: system-config
+      tags: system-config
+
+    - role: cinnamon-desktop
+      tags: desktop
+      when: desktop_environment == "cinnamon"
+
+    - role: btrfs-timeshift
+      tags: backup
+
+    - role: first-boot
+      tags: first-boot
+      when: enable_first_boot_wizard | default(true)
+
+  post_tasks:
+    - name: Final system configuration
+      debug:
+        msg:
+          - "================================================"
+          - "SOLID Linux Mint provisioning complete!"
+          - "System ready for ISO remastering"
+          - "================================================"
+
+    - name: Display installed package summary
+      debug:
+        msg:
+          - "Installed packages:"
+          - "  - LibreOffice ({{ office_packages | length }} packages)"
+          - "  - Email clients ({{ email_packages | length }} packages)"
+          - "  - Accounting ({{ accounting_packages | length }} packages)"
+          - "  - Sync tools ({{ sync_packages | length }} packages)"
+          - "  - Backup tools ({{ backup_packages | length }} packages)"
+          - "  - Printing support ({{ printing_packages | length }} packages)"

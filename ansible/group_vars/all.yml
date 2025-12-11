@@ -1,0 +1,168 @@
+---
+# Global variables for SOLID Linux Mint build
+# Organized by requirement category from docs/requirements.md
+
+## Office Productivity (FR-2)
+office_packages:
+  - libreoffice-writer          # Word-compatible documents
+  - libreoffice-calc             # Excel-compatible spreadsheets
+  - libreoffice-impress          # PowerPoint-compatible presentations
+  - libreoffice-draw             # PDF editing capability
+  - libreoffice-math             # Formula editor
+  - hunspell-en-us               # Spell checking
+  - hyphen-en-us                 # Hyphenation
+  - mythes-en-us                 # Thesaurus
+  - libreoffice-help-en-us       # Help documentation
+
+## Email & Calendar (FR-1)
+email_packages:
+  - thunderbird                  # Primary email client
+  - evolution                    # Alternative (better Exchange support)
+  - evolution-ews                # Exchange Web Services
+  - evolution-plugins            # Additional plugins
+
+## Accounting (FR-3)
+accounting_packages:
+  - gnucash                      # Small business bookkeeping
+  - gnucash-docs                 # Documentation
+  - python3-gnucash              # Scripting support for automation
+
+## File Sync & Cloud Storage (FR-4)
+sync_packages:
+  - rclone                       # Multi-cloud sync tool
+  - syncthing                    # P2P file sync
+  - syncthing-gtk                # Syncthing GUI
+
+# Note: Nextcloud desktop client may need to be installed from PPA or snap
+nextcloud_install_method: "snap"  # Options: snap, ppa, manual
+
+## Backup & Recovery (FR-6)
+backup_packages:
+  - timeshift                    # System snapshots
+  - btrfs-progs                  # BTRFS utilities
+  - grub-btrfs                   # Boot from BTRFS snapshots
+  - restic                       # Encrypted backup tool
+
+# Note: Duplicati is not in standard repos, will install separately if needed
+install_duplicati: false
+
+## Printing (FR-2.6, FR-8.2)
+printing_packages:
+  - cups                         # Print system
+  - cups-filters                 # Additional filters
+  - cups-pdf                     # Print to PDF
+  - system-config-printer        # Printer configuration GUI
+  - hplip                        # HP printer drivers
+  - printer-driver-gutenprint    # Additional printer drivers
+  - foomatic-db-compressed-ppds  # Printer PPDs database
+  - ghostscript                  # PostScript interpreter
+
+## PDF Tools (FR-2.4, FR-2.5)
+pdf_packages:
+  - evince                       # PDF viewer (GNOME Document Viewer)
+  - xournal++                    # PDF annotation
+  # LibreOffice Draw handles PDF editing
+
+## Hardware Support (FR-8)
+hardware_packages:
+  - linux-firmware               # Firmware for various hardware
+  - firmware-linux-nonfree       # Non-free firmware (may not be in Mint repos)
+  - tlp                          # Laptop power management
+  - tlp-rdw                      # TLP radio device wizard
+  - powertop                     # Power consumption analysis
+  - acpi                         # ACPI utilities
+  - lm-sensors                   # Hardware monitoring
+  - smartmontools                # Disk monitoring
+
+## Desktop & UI
+desktop_packages:
+  - papirus-icon-theme           # Modern icon theme
+  - dconf-editor                 # Configuration editor
+  - dconf-cli                    # Command-line dconf tool
+  - chrome-gnome-shell           # For Cinnamon extensions
+
+## System Utilities
+system_packages:
+  - vim                          # Text editor
+  - curl                         # HTTP client
+  - wget                         # Download tool
+  - git                          # Version control
+  - htop                         # Process viewer
+  - net-tools                    # Network utilities
+  - openssh-client               # SSH client
+  - ufw                          # Firewall
+  - gdebi                        # .deb package installer
+  - synaptic                     # Advanced package manager
+  - build-essential              # Compilation tools
+  - software-properties-common   # Manage PPAs
+  - apt-transport-https          # HTTPS support for apt
+  - ca-certificates              # SSL certificates
+  - gnupg                        # GPG encryption
+
+## Development Tools (helpful for troubleshooting)
+dev_packages:
+  - python3                      # Python 3
+  - python3-pip                  # Python package manager
+  - python3-venv                 # Virtual environments
+  - python3-gi                   # Python GTK bindings (for first-boot wizard)
+  - gir1.2-gtk-4.0               # GTK4 introspection data
+
+## Packages to Remove (bloat from base Mint install)
+remove_packages:
+  - celluloid                    # Video player (optional)
+  - hexchat                      # IRC client
+  - transmission-gtk             # BitTorrent client
+  - rhythmbox                    # Music player (optional, user choice)
+  - onboard                      # On-screen keyboard
+  - simple-scan                  # Scanner app (unless specifically needed)
+  - gnome-mahjongg               # Games
+  - gnome-mines                  # Games
+  - gnome-sudoku                 # Games
+  - aisleriot                    # Games
+
+# Keep these optional for now (user might want them):
+# - firefox (web browser - keep)
+# - thunderbird (email - installing separately)
+
+## Security Settings (NFR-4)
+enable_ufw: true
+ufw_default_policy: deny
+disable_ssh_by_default: true
+
+## Automatic Updates (NFR-1)
+enable_automatic_security_updates: true
+enable_automatic_updates: false  # Only security updates, not all
+
+## Desktop Customization Settings (FR-7)
+desktop_environment: cinnamon
+panel_position: bottom
+panel_height: 40
+window_list_style: icons_and_titles
+theme_name: Mint-Y-Dark-Blue
+icon_theme_name: Papirus
+show_desktop_icons: true
+desktop_icons_to_show:
+  - computer
+  - home
+  - trash
+
+## First-Boot Wizard Settings (FR-1, FR-4, FR-6)
+enable_first_boot_wizard: true
+first_boot_wizard_steps:
+  - email_setup
+  - cloud_sync
+  - backup_config
+  - printer_setup
+  - system_update
+
+## Timeshift Configuration (FR-6.2)
+timeshift_snapshot_type: btrfs
+timeshift_schedule_monthly: 1
+timeshift_schedule_weekly: 3
+timeshift_schedule_daily: 5
+timeshift_schedule_hourly: 6
+timeshift_schedule_boot: 3
+
+## Build User (temporary, will be removed in cleanup)
+build_user: solid
+build_user_password: temporary

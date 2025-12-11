@@ -1,0 +1,53 @@
+---
+# Security configuration (NFR-4)
+
+- name: Enable UFW firewall
+  ufw:
+    state: enabled
+    policy: "{{ ufw_default_policy | default('deny') }}"
+  when: enable_ufw | default(true)
+
+- name: Allow SSH through firewall (for build only, will be disabled later)
+  ufw:
+    rule: allow
+    port: '22'
+    proto: tcp
+  when: not (disable_ssh_by_default | default(true))
+
+- name: Disable SSH service by default
+  systemd:
+    name: ssh
+    enabled: no
+  when: disable_ssh_by_default | default(true)
+
+- name: Configure automatic security updates
+  apt:
+    name:
+      - unattended-upgrades
+      - apt-listchanges
+    state: present
+  when: enable_automatic_security_updates | default(true)
+
+- name: Enable automatic security updates
+  copy:
+    dest: /etc/apt/apt.conf.d/50unattended-upgrades
+    content: |
+      Unattended-Upgrade::Allowed-Origins {
+        "${distro_id}:${distro_codename}-security";
+        "${distro_id}ESMApps:${distro_codename}-apps-security";
+        "${distro_id}ESM:${distro_codename}-infra-security";
+      };
+      Unattended-Upgrade::AutoFixInterruptedDpkg "true";
+      Unattended-Upgrade::MinimalSteps "true";
+      Unattended-Upgrade::Remove-Unused-Kernel-Packages "true";
+      Unattended-Upgrade::Remove-Unused-Dependencies "true";
+      Unattended-Upgrade::Automatic-Reboot "false";
+    mode: '0644'
+  when: enable_automatic_security_updates | default(true)
+
+- name: Enable automatic update timer
+  systemd:
+    name: apt-daily.timer
+    enabled: yes
+    state: started
+  when: enable_automatic_security_updates | default(true)

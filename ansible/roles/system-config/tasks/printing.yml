@@ -1,0 +1,47 @@
+---
+# Printing configuration (FR-2.6, FR-8.2)
+
+- name: Enable and start CUPS service
+  systemd:
+    name: cups
+    enabled: yes
+    state: started
+
+- name: Configure CUPS to allow network printer discovery
+  lineinfile:
+    path: /etc/cups/cupsd.conf
+    regexp: '^Browsing '
+    line: 'Browsing On'
+    backup: yes
+  notify: restart cups
+
+- name: Enable printer sharing (for network printing)
+  lineinfile:
+    path: /etc/cups/cupsd.conf
+    regexp: '^BrowseLocalProtocols '
+    line: 'BrowseLocalProtocols dnssd'
+    backup: yes
+  notify: restart cups
+
+- name: Ensure CUPS listens on all interfaces
+  lineinfile:
+    path: /etc/cups/cupsd.conf
+    insertafter: '^# Only listen for connections from the local machine'
+    line: 'Port 631'
+    backup: yes
+  notify: restart cups
+
+- name: Add user to lpadmin group for printer management
+  user:
+    name: "{{ item }}"
+    groups: lpadmin
+    append: yes
+  loop:
+    - "{{ build_user }}"
+  when: build_user is defined
+
+handlers:
+  - name: restart cups
+    systemd:
+      name: cups
+      state: restarted
