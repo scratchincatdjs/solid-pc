@@ -1,4 +1,4 @@
-.PHONY: all clean clean-all download-iso verify-iso install-deps packer-build extract-iso customize-iso rebuild-iso test-iso help
+.PHONY: all clean clean-all download-iso verify-iso check-deps packer-build extract-iso customize-iso rebuild-iso test-iso help
 
 # Variables
 UBUNTU_VERSION = 24.04.3
@@ -14,7 +14,7 @@ RED = \033[0;31m
 NC = \033[0m # No Color
 
 # Default target
-all: install-deps packer-build customize-iso rebuild-iso
+all: check-deps packer-build customize-iso rebuild-iso
 	@echo "$(GREEN)✓ Build complete!$(NC)"
 	@echo "$(GREEN)✓ ISO ready at: $(OUTPUT_ISO)$(NC)"
 
@@ -25,7 +25,7 @@ help:
 	@echo "  $(GREEN)make all$(NC)             - Complete build pipeline (install deps, build VM, create ISO)"
 	@echo "  $(GREEN)make download-iso$(NC)    - Download Ubuntu $(UBUNTU_VERSION) ISO"
 	@echo "  $(GREEN)make verify-iso$(NC)      - Verify ISO checksums"
-	@echo "  $(GREEN)make install-deps$(NC)    - Install build dependencies (Packer, Ansible, QEMU, etc.)"
+	@echo "  $(GREEN)make check-deps$(NC)      - Check that build dependencies are installed"
 	@echo "  $(GREEN)make packer-build$(NC)    - Build VM with Packer + Ansible (Stage 1)"
 	@echo "  $(GREEN)make extract-iso$(NC)     - Extract base ISO (Stage 2a)"
 	@echo "  $(GREEN)make customize-iso$(NC)   - Inject customizations into ISO (Stage 2b)"
@@ -44,34 +44,67 @@ verify-iso: download-iso
 	@./scripts/verify-iso.sh $(UBUNTU_ISO_PATH)
 	@echo "$(GREEN)✓ ISO verified$(NC)"
 
-install-deps:
-	@echo "$(YELLOW)→ Installing build dependencies on Fedora 43...$(NC)"
-	@if ! command -v packer &> /dev/null; then \
-		echo "$(YELLOW)→ Installing Packer from HashiCorp repo...$(NC)"; \
-		sudo dnf install -y dnf-plugins-core; \
-		sudo dnf config-manager --add-repo https://rpm.releases.hashicorp.com/fedora/hashicorp.repo; \
-		sudo dnf install -y packer; \
+check-deps:
+	@echo "$(YELLOW)→ Checking build dependencies...$(NC)"
+	@MISSING=""; \
+	command -v packer &> /dev/null || MISSING="$$MISSING packer"; \
+	command -v qemu-system-x86_64 &> /dev/null || MISSING="$$MISSING qemu-system-x86_64"; \
+	command -v qemu-img &> /dev/null || MISSING="$$MISSING qemu-img"; \
+	command -v virsh &> /dev/null || MISSING="$$MISSING virsh(libvirt)"; \
+	command -v ansible &> /dev/null || MISSING="$$MISSING ansible"; \
+	command -v unsquashfs &> /dev/null || MISSING="$$MISSING unsquashfs(squashfs-tools)"; \
+	command -v mksquashfs &> /dev/null || MISSING="$$MISSING mksquashfs(squashfs-tools)"; \
+	command -v genisoimage &> /dev/null || MISSING="$$MISSING genisoimage"; \
+	command -v xorriso &> /dev/null || MISSING="$$MISSING xorriso"; \
+	command -v tree &> /dev/null || MISSING="$$MISSING tree"; \
+	command -v wget &> /dev/null || MISSING="$$MISSING wget"; \
+	command -v curl &> /dev/null || MISSING="$$MISSING curl"; \
+	if [ -n "$$MISSING" ]; then \
+		echo "$(RED)✗ Missing dependencies:$$MISSING$(NC)"; \
+		echo "$(YELLOW)  On Fedora, install with:$(NC)"; \
+        echo "$(YELLOW)    sudo dnf install packer qemu-system-x86 qemu-img libvirt libvirt-client ansible-core \\$(NC)";
+        echo "$(YELLOW)                      virt-install squashfs-tools genisoimage xorriso tree wget curl$(NC)";
+		echo "$(YELLOW)  Note: Packer may require adding HashiCorp repo first:$(NC)"; \
+		echo "$(YELLOW)    sudo dnf config-manager --add-repo https://rpm.releases.hashicorp.com/fedora/hashicorp.repo$(NC)"; \
+		exit 1; \
 	fi
-	@echo "$(YELLOW)→ Installing QEMU, Ansible, and ISO tools...$(NC)"
-	@sudo dnf install -y \
-		qemu-kvm \
-		qemu-img \
-		libvirt \
-		virt-manager \
-		ansible-core \
-		squashfs-tools \
-		genisoimage \
-		xorriso \
-		syslinux \
-		tree \
-		wget \
-		curl
-	@echo "$(YELLOW)→ Enabling libvirtd service...$(NC)"
-	@sudo systemctl enable --now libvirtd || true
-	@echo "$(YELLOW)→ Adding user to libvirt group...$(NC)"
-	@sudo usermod -a -G libvirt $(USER) || true
-	@echo "$(GREEN)✓ Dependencies installed$(NC)"
-	@echo "$(YELLOW)NOTE: You may need to log out and back in for group changes to take effect$(NC)"
+	@if ! groups | grep -qw libvirt; then \
+		echo "$(RED)✗ User '$(USER)' is not in the libvirt group$(NC)"; \
+		echo "$(YELLOW)  Add with: sudo usermod -a -G libvirt $(USER)$(NC)"; \
+		echo "$(YELLOW)  Then log out and back in$(NC)"; \
+		exit 1; \
+	fi
+	@if ! systemctl is-active --quiet libvirtd; then \
+		echo "$(RED)✗ libvirtd service is not running$(NC)"; \
+		echo "$(YELLOW)  Start with: sudo systemctl enable --now libvirtd$(NC)"; \
+		exit 1; \
+	fi
+	@if [ ! -e /dev/kvm ]; then \
+		echo "$(RED)✗ /dev/kvm not found — KVM acceleration unavailable$(NC)"; \
+		echo "$(YELLOW)  Your system may not support virtualization or BIOS VT-x/AMD-V is disabled$(NC)"; \
+		exit 1; \
+	fi
+
+	@if ! lsmod | grep -qw kvm; then \
+		echo "$(RED)✗ KVM kernel module is not loaded$(NC)"; \
+		echo "$(YELLOW)  Load with: sudo modprobe kvm && sudo modprobe kvm_amd  # or kvm_intel$(NC)"; \
+		exit 1; \
+	fi
+
+	@if ! groups | grep -qw kvm; then \
+		echo "$(RED)✗ User '$(USER)' is not in the kvm group$(NC)"; \
+		echo "$(YELLOW)  Add with: sudo usermod -aG kvm $(USER)$(NC)"; \
+		echo "$(YELLOW)  Then log out and back in$(NC)"; \
+		exit 1; \
+	fi
+
+	@if [ ! -r /dev/kvm ] || [ ! -w /dev/kvm ]; then \
+		echo "$(RED)✗ User '$(USER)' does not have permission to access /dev/kvm$(NC)"; \
+		echo "$(YELLOW)  Fix with: sudo chown root:kvm /dev/kvm && sudo chmod 660 /dev/kvm$(NC)"; \
+		exit 1; \
+	fi
+
+	@echo "$(GREEN)✓ All dependencies found$(NC)"
 
 packer-build: verify-iso
 	@echo "$(YELLOW)→ Building VM with Packer + Ansible (this will take 60-90 minutes)...$(NC)"
