@@ -1,6 +1,10 @@
 ---
 # System configuration tasks
-# Handles printing, networking, power management, and security
+# Handles printing, networking, power management, security, and boot optimization
+
+- name: Import boot optimization tasks
+  import_tasks: boot-optimization.yml
+  tags: boot
 
 - name: Import printing configuration tasks
   import_tasks: printing.yml

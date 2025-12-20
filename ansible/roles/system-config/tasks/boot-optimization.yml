@@ -1,0 +1,53 @@
+---
+# Boot optimization configuration
+# Reduces boot time and improves perceived performance
+
+- name: Ensure grub.d directory exists
+  file:
+    path: /etc/default/grub.d
+    state: directory
+    mode: '0755'
+
+- name: Configure GRUB for fast boot
+  lineinfile:
+    path: /etc/default/grub
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    backup: yes
+  loop:
+    - regexp: '^GRUB_TIMEOUT='
+      line: 'GRUB_TIMEOUT=2'
+    - regexp: '^GRUB_TIMEOUT_STYLE='
+      line: 'GRUB_TIMEOUT_STYLE=hidden'
+    - regexp: '^GRUB_CMDLINE_LINUX_DEFAULT='
+      line: 'GRUB_CMDLINE_LINUX_DEFAULT="quiet splash loglevel=3 rd.systemd.show_status=auto rd.udev.log_level=3"'
+  notify: update grub
+
+- name: Set GRUB recordfail timeout
+  lineinfile:
+    path: /etc/default/grub
+    regexp: '^GRUB_RECORDFAIL_TIMEOUT='
+    line: 'GRUB_RECORDFAIL_TIMEOUT=2'
+    insertafter: '^GRUB_TIMEOUT='
+  notify: update grub
+
+- name: Disable GRUB OS prober for faster boot
+  lineinfile:
+    path: /etc/default/grub
+    regexp: '^#?GRUB_DISABLE_OS_PROBER='
+    line: 'GRUB_DISABLE_OS_PROBER=true'
+  notify: update grub
+
+- name: Create SOLID performance GRUB config
+  copy:
+    dest: /etc/default/grub.d/99-solid-performance.cfg
+    content: |
+      # SOLID Performance Settings
+      # Optimized for fast boot in virtualized and bare-metal environments
+      GRUB_TIMEOUT=2
+      GRUB_TIMEOUT_STYLE=hidden
+      GRUB_CMDLINE_LINUX_DEFAULT="quiet splash loglevel=3 rd.systemd.show_status=auto rd.udev.log_level=3"
+      GRUB_RECORDFAIL_TIMEOUT=2
+      GRUB_DISABLE_OS_PROBER=true
+    mode: '0644'
+  notify: update grub

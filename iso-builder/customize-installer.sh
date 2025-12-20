@@ -52,6 +52,25 @@ if [ -d "${SCRIPT_DIR}/assets/installer-slides" ]; then
     sudo cp -r "${SCRIPT_DIR}/assets/installer-slides/"* "${SQUASHFS_DIR}/usr/share/ubiquity-slideshow/slides/" || true
 fi
 
+# Configure GRUB for fast boot
+echo "→ Configuring GRUB for fast boot..."
+sudo mkdir -p "${SQUASHFS_DIR}/etc/default/grub.d"
+sudo tee "${SQUASHFS_DIR}/etc/default/grub.d/99-solid-performance.cfg" > /dev/null << 'EOF'
+# SOLID Performance Settings
+# Optimized for fast boot in virtualized and bare-metal environments
+GRUB_TIMEOUT=2
+GRUB_TIMEOUT_STYLE=hidden
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash loglevel=3 rd.systemd.show_status=auto rd.udev.log_level=3"
+GRUB_RECORDFAIL_TIMEOUT=2
+GRUB_DISABLE_OS_PROBER=true
+EOF
+
+# Update live boot grub.cfg timeout if present
+if [ -f "${WORKSPACE}/extract/boot/grub/grub.cfg" ]; then
+    echo "→ Updating live boot GRUB timeout..."
+    sudo sed -i 's/set timeout=[0-9]*/set timeout=2/' "${WORKSPACE}/extract/boot/grub/grub.cfg" 2>/dev/null || true
+fi
+
 # Update manifests
 echo "→ Updating filesystem manifest..."
 sudo chroot "${SQUASHFS_DIR}" dpkg-query -W --showformat='${Package} ${Version}\n' | sudo tee "${WORKSPACE}/extract/casper/filesystem.manifest" > /dev/null

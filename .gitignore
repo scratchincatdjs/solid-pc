@@ -1,0 +1,5 @@
+# Local downloads (ISOs, artifacts, temp files)
+downloads/
+
+# Packer build output directories
+packer/output/

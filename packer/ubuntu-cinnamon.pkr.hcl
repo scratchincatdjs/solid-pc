@@ -33,18 +33,21 @@ source "qemu" "ubuntu-cinnamon" {
   net_device       = "virtio-net"
   output_directory = var.output_directory
 
-  // Acceleration
-  accelerator      = "kvm"
+  // Acceleration and performance (optimized for nested virtualization)
+  accelerator        = "kvm"
+  cpu_model          = "host"
+  machine_type       = "q35"
+  disk_cache         = "unsafe"
+  disk_discard       = "unmap"
+  disk_detect_zeroes = "unmap"
 
   // Boot Configuration for Ubuntu 24.04 autoinstall
-  boot_wait        = "5s"
-  boot_command     = [
+  boot_wait        = "10s"
+  boot_command = [
     "<esc><wait>",
     "c<wait>",
-    "linux /casper/vmlinuz ",
-    "autoinstall ",
-    "ds=nocloud-net\\;s=http://{{ .HTTPIP }}:{{ .HTTPPort }}/ ",
-    "--- <enter>",
+    "set root=(cd)<enter>",
+    "linux /casper/vmlinuz autoinstall ds=nocloud-net\\;s=http://{{ .HTTPIP }}:{{ .HTTPPort }}/ ---<enter>",
     "initrd /casper/initrd<enter>",
     "boot<enter>"
   ]
@@ -61,7 +64,7 @@ source "qemu" "ubuntu-cinnamon" {
   ssh_wait_timeout = "60m"
 
   // Headless mode (set to false for debugging)
-  headless         = false
+  headless         = true
 
   // VNC configuration for monitoring
   vnc_bind_address = "0.0.0.0"

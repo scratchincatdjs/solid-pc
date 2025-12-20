@@ -62,8 +62,8 @@ check-deps:
 	if [ -n "$$MISSING" ]; then \
 		echo "$(RED)✗ Missing dependencies:$$MISSING$(NC)"; \
 		echo "$(YELLOW)  On Fedora, install with:$(NC)"; \
-        echo "$(YELLOW)    sudo dnf install packer qemu-system-x86 qemu-img libvirt libvirt-client ansible-core \\$(NC)";
-        echo "$(YELLOW)                      virt-install squashfs-tools genisoimage xorriso tree wget curl$(NC)";
+        echo "$(YELLOW)    sudo dnf install packer qemu-system-x86 qemu-img libvirt libvirt-client ansible-core \\$(NC)"; \
+        echo "$(YELLOW)                      virt-install squashfs-tools genisoimage xorriso tree wget curl$(NC)"; \
 		echo "$(YELLOW)  Note: Packer may require adding HashiCorp repo first:$(NC)"; \
 		echo "$(YELLOW)    sudo dnf config-manager --add-repo https://rpm.releases.hashicorp.com/fedora/hashicorp.repo$(NC)"; \
 		exit 1; \

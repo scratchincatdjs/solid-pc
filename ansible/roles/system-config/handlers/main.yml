@@ -1,0 +1,6 @@
+---
+# Handlers for system-config role
+
+- name: update grub
+  command: update-grub
+  listen: update grub
